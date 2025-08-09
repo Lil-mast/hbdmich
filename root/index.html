@@ -24,7 +24,28 @@
   @media (max-width:600px){ .photos img{width:140px;height:140px} .heart{width:48px;height:48px} h1{font-size:2.2rem} }
 </style>
 </head>
+
 <body>
+<!-- Login Overlay -->
+<div id="loginOverlay" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10000;background:linear-gradient(135deg, rgba(8,34,77,0.85), rgba(46,104,170,0.6));backdrop-filter: blur(6px);">
+  <div id="loginCard" style="width:92%;max-width:520px;padding:28px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));box-shadow:0 12px 40px rgba(4,20,45,0.6);border:1px solid rgba(255,255,255,0.06);color:white;transform-style:preserve-3d;">
+    <h2 id="loginTitle" style="margin:0 0 10px 0;font-family:'Brush Script MT', cursive;font-size:2.4rem;text-align:center;letter-spacing:0.6px">💖 Welcome to Your Birthday Surprise 💖</h2>
+    <p style="opacity:0.9;text-align:center;margin:6px 0 18px 0">Enter your name and secret password to unlock your gift.</p>
+    <div style="display:flex;gap:10px;flex-direction:column">
+      <input id="usernameInput" placeholder="Full name" style="padding:12px 14px;border-radius:10px;border:none;outline:none;font-size:16px" />
+      <input id="passwordInput" placeholder="Password" type="password" style="padding:12px 14px;border-radius:10px;border:none;outline:none;font-size:16px" />
+      <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px">
+        <button id="loginBtn" style="padding:10px 16px;border-radius:10px;border:none;background:linear-gradient(90deg,#74c0ff,#1e66c8);color:white;font-weight:700;cursor:pointer">Enter</button>
+      </div>
+      <div id="loginMsg" style="text-align:center;margin-top:10px;opacity:0.95;font-weight:700"></div>
+    </div>
+    <div style="height:8px"></div>
+    <!-- colorful pattern blobs -->
+    <div aria-hidden="true" style="position:absolute;right:-90px;top:-60px;width:240px;height:240px;border-radius:50%;filter:blur(24px);background:radial-gradient(circle at 20% 20%, rgba(255,128,196,0.18), transparent 30%), radial-gradient(circle at 80% 80%, rgba(120,200,255,0.12), transparent 40%);transform:translateZ(-40px)"></div>
+    <div aria-hidden="true" style="position:absolute;left:-80px;bottom:-50px;width:200px;height:200px;border-radius:50%;filter:blur(22px);background:linear-gradient(135deg, rgba(180,120,255,0.12), rgba(120,210,255,0.12));transform:translateZ(-30px)"></div>
+  </div>
+</div>
+
 <div class="center">
   <h1>Happy Birthday Michelle!</h1>
   <div id="game" aria-label="Heart Hunt game">
@@ -233,12 +254,102 @@ window.addEventListener('resize', ()=> {
   c.width = window.innerWidth; c.height = window.innerHeight;
 });
 
-// start the game
-spawnHearts();
+// start the game will be triggered after successful login
 
 // hint: clicking anywhere gives focus and allows autoplay with sound on some browsers
 document.getElementById('game').addEventListener('click', ()=>{ try{ finalVideo.muted = false; }catch(e){} });
 
 </script>
+
+<!-- anime.js for 3D and smooth animations -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script>
+// login logic
+const correctName = "Michelle Mwaniki";
+const correctPass = "mzee@20";
+
+const loginOverlay = document.getElementById('loginOverlay');
+const loginBtn = document.getElementById('loginBtn');
+const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
+const loginMsg = document.getElementById('loginMsg');
+const loginCard = document.getElementById('loginCard');
+const loginTitle = document.getElementById('loginTitle');
+
+function shake(el){
+  anime({
+    targets: el,
+    translateX: [0, -10, 8, -6, 4, -2, 0],
+    duration: 700,
+    easing: 'easeOutElastic(1, .8)'
+  });
+}
+
+function successEntrance(){
+  // 3D flip and scale out the login card
+  anime.timeline()
+    .add({
+      targets: loginCard,
+      rotateY: [0, 360],
+      scale: [1, 1.04],
+      duration: 900,
+      easing: 'easeInOutQuad'
+    })
+    .add({
+      targets: loginOverlay,
+      opacity: [1,0],
+      duration: 600,
+      easing: 'easeInOutSine',
+      complete: function(){ loginOverlay.style.display='none'; startGameAfterLogin(); }
+    }, "+=120");
+}
+
+// small title pulse
+anime({
+  targets: '#loginTitle',
+  scale: [0.98,1.02],
+  duration: 1600,
+  direction: 'alternate',
+  loop: true,
+  easing: 'easeInOutSine'
+});
+
+loginBtn.addEventListener('click', ()=>{
+  const name = usernameInput.value.trim();
+  const pass = passwordInput.value;
+  if(name === correctName && pass === correctPass){
+    loginMsg.style.color = '#dff7ff';
+    loginMsg.textContent = 'Welcome, birthday queen ✨';
+    // animate success and then remove overlay
+    successEntrance();
+  } else {
+    loginMsg.style.color = '#ffd6d6';
+    loginMsg.textContent = 'Nice try, but only the birthday queen gets in! 🎂✨';
+    shake(loginCard);
+  }
+});
+
+// allow Enter key to submit
+[usernameInput, passwordInput].forEach(inp=>{
+  inp.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') loginBtn.click();
+  });
+});
+
+// Pause game until login: ensure spawnHearts is only called after login
+function startGameAfterLogin(){
+  // minor delay so animation finishes
+  setTimeout(()=>{ try{ if(typeof spawnHearts === 'function') spawnHearts(); }catch(e){} }, 260);
+  // give the game container a gentle entrance
+  anime({
+    targets: '#game',
+    translateY: [30,0],
+    opacity: [0,1],
+    duration: 800,
+    easing: 'easeOutCubic'
+  });
+}
+</script>
+
 </body>
 </html>
